@@ -68,34 +68,64 @@ jobs:
           fi
 
       - name: Monitor test run status
-        run: |
-          echo "Starting Monitor test run status step"
-          status=''
-          agentstatus=''
-          response=''
-          result=''
-          count=0
-          end_time=$(($(date +%s) + 3600)) # One hour timeout
-          while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
-              echo "Loop count: $count"
-              echo "Fetching status for test run ID: $value"
-              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
-                --header 'Content-Type: application/json' \
-                --header "X-INS-ID: $INSID" \
-                --header "X-API-TOKEN: $APITOKEN")
-              echo "API response: $response"
-              status=$(echo $response | jq -r '.status')
-              result=$(echo $response | jq -r '.result')
-              agentstatus=$(echo $response | jq -r '.cloudAgentStatus')
-              echo "Parsed status: $status"
-              echo "Parsed result: $result"
-              echo "Parsed agent status: $agentstatus"
-              sleep 20
-              count=$((count+1))
-              if [[ $result == 'FAIL' || $status == 'null' ]]; then
-                  echo "Result status is $result"
-                  exit 1
-              else
-                  echo "Result status is $result"
-              fi
-          done
+  run: |
+    echo "Starting Monitor test run status step"
+    status=''
+    agentstatus=''
+    response=''
+    result=''
+    count=0
+    end_time=$(($(date +%s) + 3600)) # One hour timeout
+
+    # Ensure TESTRUNID is not empty
+    if [ -z "$value" ] || [ "$value" == "null" ]; then
+      echo "Test run ID is not set correctly."
+      exit 1
+    fi
+
+    while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
+        echo "Loop count: $count"
+        echo "Fetching status for test run ID: $value"
+        response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
+          --header 'Content-Type: application/json' \
+          --header "X-INS-ID: $INSID" \
+          --header "X-API-TOKEN: $APITOKEN")
+        
+        # Check if curl command succeeded
+        if [ $? -ne 0 ]; then
+            echo "Curl command failed."
+            exit 1
+        fi
+
+        echo "API response: $response"
+        status=$(echo $response | jq -r '.status')
+        result=$(echo $response | jq -r '.result')
+        agentstatus=$(echo $response | jq -r '.cloudAgentStatus')
+
+        # Check if jq commands succeeded
+        if [ $? -ne 0 ]; then
+            echo "JQ parsing failed."
+            exit 1
+        fi
+
+        echo "Parsed status: $status"
+        echo "Parsed result: $result"
+        echo "Parsed agent status: $agentstatus"
+
+        # Check for failure or invalid response
+        if [[ $result == 'FAIL' || $status == 'null' ]]; then
+            echo "Result status is $result"
+            exit 1
+        else
+            echo "Result status is $result"
+        fi
+
+        sleep 20
+        count=$((count+1))
+    done
+
+    # Final check for status after timeout
+    if [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' ]]; then
+        echo "Timeout reached without completing the test run."
+        exit 1
+    fi
