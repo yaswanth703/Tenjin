@@ -23,6 +23,7 @@ jobs:
         run: sudo apt-get install -y curl
 
       - name: Execute test run
+        id: execute_test_run
         env:
           IPADDR: 'https://yethi-test.tenjinonline.com'
           INSID: 'yethi-test'
@@ -66,6 +67,7 @@ jobs:
             echo "Failed to retrieve test run ID"
             exit 1
           fi
+          echo "::set-output name=test_run_id::$value"
 
       - name: Monitor test run status
         run: |
@@ -76,6 +78,9 @@ jobs:
           result=''
           count=0
           end_time=$(($(date +%s) + 3600)) # One hour timeout
+
+          # Fetch the Test Run ID from the previous step's output
+          value=${{ steps.execute_test_run.outputs.test_run_id }}
 
           # Ensure TESTRUNID is not empty
           if [ -z "$value" ] || [ "$value" == "null" ]; then
