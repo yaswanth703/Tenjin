@@ -1,14 +1,17 @@
 name: Execute Test Run
-
+ 
 on:
   push:
     branches:
       - main
-
+ 
 jobs:
-  test-run:
-    runs-on: ['ubuntu-latest']
-
+  execute-test-run:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+ 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,58 +21,48 @@ jobs:
  
       - name: Install curl
         run: sudo apt-get install -y curl
-
-    env:
-      IPADDR: 'https://yethi-test.tenjinonline.com'
-      INSID: 'yethi-test'
-      APITOKEN: 'BLtzOI16bfz42xtL1A8nUmM9eFGO/rwEIRSYK8vcgGl9ShmZN/0WM4Ja/nCKxWeZXVAmOk5WgVPZYr57uoDANzoM5lF/M/m1+t4/niCjadwAoS9/r/6WYMCLPPnzpjUeA4dBDd9NjeWg0hQEJJnS15Xt++fXXsSf/XJ0UNVEVj3NpHBOGSXwRrb3sniTHNs2AHQ3ssor9sw/wHYFqhMjN8FtIP1JdyWBABzXwmkKcF9jsEZPZyH23UGS60mEqWUd5V5LbnXi0VH2MyOG76ul51rIyQ/aRv1Sv/gDDfeFRaBNWYv991GU0NdeTjuSQGouNV6VGC4viKwPQ+dHdxhNjQ=='
-      AGENTNAME: 'ponnar'
-      INCLUDECLOUDDEVICE: 'false'
-      INCLUDECLOUDBROWSER: 'false'
-      # DEVICENAME: 
-      PROJECTKEY: 'PTO1'
-      BROWSER: 'chorme'
-      REGION: 'UTC+05:30'
-      TESTRUNID: 'Test-Run-12490532'
-      ISCLOUDAGENT: 'false'
-      BROWSERVERSION: '80.0'
-      OS: 'Windows 8.1'
-      # RUNONLYFAILED: ${{ secrets.RUNONLYFAILED }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Define end time
-        id: define_end_time
-        run: echo "::set-output name=end_time::$(date -d 'now + 1 hour' +'%s')"
-
-      - name: Execute Test Run
-        id: execute_test_run
+ 
+      - name: Execute test run
+        env:
+          IPADDR: 'http://a0ee39402c50b4ef481304273a6c89b7-870011787.ap-south-1.elb.amazonaws.com'
+          INSID: 'yethi-test'
+          APITOKEN: 'QjE9tTrKWL05gXTs81nebyPorhUfszQambJ9KJ5fG/w0hWSO5AkRkrgjDxxQZyRygajo1EzrmPGui18oK3ooCIwJJmDXJ6J4wBdPBrRXkfwnFunpOvySH32QjUs6xdtZLkZwECHyG0Yt4TbNwe8bnbOvftM9OPrb5DB5n3gRrBQSlH4RP1HVuwhbwc19mynLsXa8LOGfB6/VlI3ZsLe61lBr9IsZBEGN1lgA8tCR5bGhE4PqrnybuUh8KKGy+1y8rh2Nh5zcCLmpQ7/QE5edLXWP6XvA7ixi03Z52ubLtHtk1MVgUINmG1WSdCUZofqyg83xcXtcMCgu8fTU0HhKUw=='
+          AGENTNAME: 'SHALINI PRE'
+          INCLUDECLOUDDEVICE: 'FALSE'
+          INCLUDECLOUDBROWSER: 'FALSE'
+          DEVICENAME: ''
+          PROJECTKEY: 'R39'
+          BROWSER: 'chrome'
+          REGION: 'UTC+05:30'
+          TESTRUNID: 'Test-Run-4828578'
+          ISCLOUDAGENT: 'FALSE'
+          BROWSERVERSION: ''
+          OS: ''
+          RUNONLYFAILED: 'FALSE'
         run: |
           EXECUTE=$(curl -s -k --request POST "$IPADDR/api/rest/1/execute/testrun" \
             --header 'Content-Type: application/json' \
-            --header 'X-INS-ID: $INSID' \
-            --header 'X-API-TOKEN: $APITOKEN' \
+            --header "X-INS-ID: $INSID" \
+            --header "X-API-TOKEN: $APITOKEN" \
             --data-raw '{
-              "agentName": "$AGENTNAME",
-              "includeCloudDevice": "$INCLUDECLOUDDEVICE",
-              "includeCloudBrowser": "$INCLUDECLOUDBROWSER",
-              "device": "$DEVICENAME",
-              "projectKey": "$PROJECTKEY",
-              "browser": "$BROWSER",
-              "region": "$REGION",
-              "testRunId": "$TESTRUNID",
-              "cloudAgent": "$ISCLOUDAGENT",
-              "browserVersion": "$BROWSERVERSION",
-              "os": "$OS",
-              "reRunFailedCases": "$RUNONLYFAILED"
-            }')
+                   "agentName": "'"$AGENTNAME"'",
+                   "includeCloudDevice": "'"$INCLUDECLOUDDEVICE"'",
+                   "includeCloudBrowser": "'"$INCLUDECLOUDBROWSER"'",
+                   "device": "'"$DEVICENAME"'",
+                   "projectKey": "'"$PROJECTKEY"'",
+                   "browser": "'"$BROWSER"'",
+                   "region": "'"$REGION"'",
+                   "testRunId": "'"$TESTRUNID"'",
+                   "cloudAgent": "'"$ISCLOUDAGENT"'",
+                   "browserVersion": "'"$BROWSERVERSION"'",
+                   "os": "'"$OS"'",
+                   "reRunFailedCases": "'"$RUNONLYFAILED"'"
+                   }')
           echo "EXECUTE: $EXECUTE"       
           value=$(echo $EXECUTE | jq -r '.testRunId')
-          echo "Test Run ID: $value" 
-
-      - name: Monitor Test Run
+          echo "Test Run ID: $value"      
+ 
+      - name: Monitor test run status
         run: |
           status=''
           agentstatus=''
@@ -95,30 +88,3 @@ jobs:
                   echo "Result status is $result"
               fi
           done
-
-# has context menu
-
-  # # Handle post-aborted stage
-  # post-aborted:
-  #   runs-on: ['ubuntu-latest']
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-
-  #     - name: Read test run ID from file
-  #       id: read_test_run_id
-  #       run: |
-  #         if [ -f value.txt ]; then
-  #           TEST_RUN_ID=$(cat value.txt)
-  #           echo "::set-output name=test_run_id::$TEST_RUN_ID"
-  #         fi
- 
-  #     - name: Abort test run
-  #       if: ${{ always() && steps.read_test_run_id.outputs.test_run_id != '' }}
-  #       run: |
-  #         curl -s -k --request PUT "$IPADDR/api/rest/1/abortrun/${{ steps.read_test_run_id.outputs.test_run_id }}" \
-  #           --header 'Content-Type: application/json' \
-  #           --header 'X-INS-ID: $INSID' \
-  #           --header 'X-API-TOKEN: $APITOKEN"
-  #         rm -rf value.txt
