@@ -103,7 +103,7 @@ has context menu
   #           TEST_RUN_ID=$(cat value.txt)
   #           echo "::set-output name=test_run_id::$TEST_RUN_ID"
   #         fi
-
+ 
   #     - name: Abort test run
   #       if: ${{ always() && steps.read_test_run_id.outputs.test_run_id != '' }}
   #       run: |
