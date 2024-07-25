@@ -86,7 +86,7 @@ jobs:
               fi
           done
 
-has context menu
+# has context menu
 
   # # Handle post-aborted stage
   # post-aborted:
