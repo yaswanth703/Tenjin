@@ -23,7 +23,6 @@ jobs:
         run: sudo apt-get install -y curl
 
       - name: Execute test run
-        id: execute_test_run
         env:
           IPADDR: 'https://yethi-test.tenjinonline.com'
           INSID: 'yethi-test'
@@ -67,7 +66,6 @@ jobs:
             echo "Failed to retrieve test run ID"
             exit 1
           fi
-          echo "::set-output name=test_run_id::$value"
 
       - name: Monitor test run status
         run: |
@@ -78,19 +76,6 @@ jobs:
           result=''
           count=0
           end_time=$(($(date +%s) + 3600)) # One hour timeout
-
-          # Fetch the Test Run ID from the previous step's output
-          value=${{ steps.execute_test_run.outputs.test_run_id }}
-
-          # Debugging: Check if value is correctly set
-          echo "Fetched Test Run ID: $value"
-
-          # Ensure TESTRUNID is not empty
-          if [ -z "$value" ] || [ "$value" == "null" ]; then
-            echo "Test run ID is not set correctly."
-            exit 1
-          fi
-
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
               echo "Loop count: $count"
               echo "Fetching status for test run ID: $value"
@@ -98,42 +83,19 @@ jobs:
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
                 --header "X-API-TOKEN: $APITOKEN")
-              
-              # Check if curl command succeeded
-              if [ $? -ne 0 ]; then
-                  echo "Curl command failed."
-                  exit 1
-              fi
-
               echo "API response: $response"
               status=$(echo $response | jq -r '.status')
               result=$(echo $response | jq -r '.result')
               agentstatus=$(echo $response | jq -r '.cloudAgentStatus')
-
-              # Check if jq commands succeeded
-              if [ $? -ne 0 ]; then
-                  echo "JQ parsing failed."
-                  exit 1
-              fi
-
               echo "Parsed status: $status"
               echo "Parsed result: $result"
               echo "Parsed agent status: $agentstatus"
-
-              # Check for failure or invalid response
+              sleep 20
+              count=$((count+1))
               if [[ $result == 'FAIL' || $status == 'null' ]]; then
                   echo "Result status is $result"
                   exit 1
               else
                   echo "Result status is $result"
               fi
-
-              sleep 20
-              count=$((count+1))
           done
-
-          # Final check for status after timeout
-          if [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' ]]; then
-              echo "Timeout reached without completing the test run."
-              exit 1
-          fi
