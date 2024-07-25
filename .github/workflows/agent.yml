@@ -93,7 +93,7 @@ jobs:
 
   # Handle post-aborted stage
   post-aborted:
-    runs-on: [self-hosted, 'tot-master']
+    runs-on: ['ubuntu-latest']
 
     steps:
       - name: Checkout code
