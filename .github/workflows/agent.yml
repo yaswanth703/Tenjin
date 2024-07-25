@@ -76,10 +76,10 @@ jobs:
               --header 'Content-Type: application/json' \
               --header 'X-INS-ID: $INSID' \
               --header 'X-API-TOKEN: $APITOKEN")
-            status=$(echo "$response" | jq -r '.status')
-            result=$(echo "$response" | jq -r '.result')
-            region=$(echo "$response" | jq -r '.region')
-            agentstatus=$(echo "$response" | jq -r '.cloudAgentStatus')
+            status=$("echo '$response' | jq -r '.status'")
+            result=$("echo '$response' | jq -r '.result'")
+            region=$("echo '$response' | jq -r '.region'")
+            agentstatus=$("echo '$response' | jq -r '.cloudAgentStatus'")
             echo "inloop status $response \n $status"
             if [[ "$result" == "FAIL" || "$status" == "null" ]]; then
               echo "Result status is $result"
