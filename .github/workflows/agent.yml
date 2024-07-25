@@ -41,6 +41,11 @@ jobs:
           RUNONLYFAILED: 'FALSE'
         run: |
           echo "Starting Execute test run step"
+          # Manually created ID
+          MANUAL_ID='Test-Run-12561580'
+          echo "Manually created ID: $MANUAL_ID"
+
+          # Execute the test run and capture the automatically generated ID
           EXECUTE=$(curl -s -k --request POST "$IPADDR/api/rest/1/execute/testrun" \
             --header 'Content-Type: application/json' \
             --header "X-INS-ID: $INSID" \
@@ -53,19 +58,23 @@ jobs:
                    "projectKey": "'"$PROJECTKEY"'",
                    "browser": "'"$BROWSER"'",
                    "region": "'"$REGION"'",
-                   "testRunId": "'"$TESTRUNID"'",
+                   "testRunId": "'"$MANUAL_ID"'",
                    "cloudAgent": "'"$ISCLOUDAGENT"'",
                    "browserVersion": "'"$BROWSERVERSION"'",
                    "os": "'"$OS"'",
                    "reRunFailedCases": "'"$RUNONLYFAILED"'"
                    }')
           echo "EXECUTE response: $EXECUTE"
-          value=$(echo $EXECUTE | jq -r '.testRunId')
-          echo "Test Run ID: $value"
-          if [ -z "$value" ] || [ "$value" == "null" ]; then
-            echo "Failed to retrieve test run ID"
+          AUTO_GENERATED_ID=$(echo $EXECUTE | jq -r '.testRunId')
+          echo "Automatically generated ID: $AUTO_GENERATED_ID"
+          if [ -z "$AUTO_GENERATED_ID" ] || [ "$AUTO_GENERATED_ID" == "null" ]; then
+            echo "Failed to retrieve automatically generated test run ID"
             exit 1
           fi
+          
+          # Store IDs as environment variables
+          echo "MANUAL_ID=$MANUAL_ID" >> $GITHUB_ENV
+          echo "AUTO_GENERATED_ID=$AUTO_GENERATED_ID" >> $GITHUB_ENV
 
       - name: Monitor test run status
         run: |
@@ -78,8 +87,8 @@ jobs:
           end_time=$(($(date +%s) + 3600)) # One hour timeout
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
               echo "Loop count: $count"
-              echo "Fetching status for test run ID: $value"
-              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
+              echo "Fetching status for test run ID: $AUTO_GENERATED_ID"
+              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$AUTO_GENERATED_ID/runstatus" \
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
                 --header "X-API-TOKEN: $APITOKEN")
