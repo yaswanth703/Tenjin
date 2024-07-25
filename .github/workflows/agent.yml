@@ -40,6 +40,7 @@ jobs:
           OS: 'Windows 8.1'
           RUNONLYFAILED: 'FALSE'
         run: |
+          echo "Starting Execute test run step"
           EXECUTE=$(curl -s -k --request POST "$IPADDR/api/rest/1/execute/testrun" \
             --header 'Content-Type: application/json' \
             --header "X-INS-ID: $INSID" \
@@ -58,12 +59,13 @@ jobs:
                    "os": "'"$OS"'",
                    "reRunFailedCases": "'"$RUNONLYFAILED"'"
                    }')
-          echo "EXECUTE: $EXECUTE"
+          echo "EXECUTE response: $EXECUTE"
           value=$(echo $EXECUTE | jq -r '.testRunId')
           echo "Test Run ID: $value"
 
       - name: Monitor test run status
         run: |
+          echo "Starting Monitor test run status step"
           status=''
           agentstatus=''
           response=''
@@ -71,6 +73,7 @@ jobs:
           count=0
           end_time=$(($(date +%s) + 3600)) # One hour timeout
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
+              echo "Loop count: $count"
               response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
