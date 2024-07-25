@@ -74,15 +74,18 @@ jobs:
           end_time=$(($(date +%s) + 3600)) # One hour timeout
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
               echo "Loop count: $count"
+              echo "Fetching status for test run ID: $value"
               response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
                 --header "X-API-TOKEN: $APITOKEN")
+              echo "API response: $response"
               status=$(echo $response | jq -r '.status')
               result=$(echo $response | jq -r '.result')
-              echo $response
               agentstatus=$(echo $response | jq -r '.cloudAgentStatus')
-              echo "inloop status $response \n $status"
+              echo "Parsed status: $status"
+              echo "Parsed result: $result"
+              echo "Parsed agent status: $agentstatus"
               sleep 20
               count=$((count+1))
               if [[ $result == 'FAIL' || $status == 'null' ]]; then
