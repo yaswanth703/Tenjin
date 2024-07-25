@@ -60,7 +60,7 @@ jobs:
                    }')
           echo "EXECUTE: $EXECUTE"       
           value=$(echo $EXECUTE | jq -r '.testRunId')
-          echo "Test Run ID: $value"      
+          echo "$value"      
  
       - name: Monitor test run status
         run: |
