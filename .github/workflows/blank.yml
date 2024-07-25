@@ -1,0 +1,117 @@
+name: Execute Test Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-run:
+    runs-on: [self-hosted, 'tot-master']
+
+    env:
+      IPADDR: ${{ secrets.IPADDR }}
+      INSID: ${{ secrets.INSID }}
+      APITOKEN: ${{ secrets.APITOKEN }}
+      AGENTNAME: ${{ secrets.AGENTNAME }}
+      INCLUDECLOUDDEVICE: ${{ secrets.INCLUDECLOUDDEVICE }}
+      INCLUDECLOUDBROWSER: ${{ secrets.INCLUDECLOUDBROWSER }}
+      DEVICENAME: ${{ secrets.DEVICENAME }}
+      PROJECTKEY: ${{ secrets.PROJECTKEY }}
+      BROWSER: ${{ secrets.BROWSER }}
+      REGION: ${{ secrets.REGION }}
+      TESTRUNID: ${{ secrets.TESTRUNID }}
+      ISCLOUDAGENT: ${{ secrets.ISCLOUDAGENT }}
+      BROWSERVERSION: ${{ secrets.BROWSERVERSION }}
+      OS: ${{ secrets.OS }}
+      RUNONLYFAILED: ${{ secrets.RUNONLYFAILED }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Define end time
+        id: define_end_time
+        run: echo "::set-output name=end_time::$(date -d 'now + 1 hour' +'%s')"
+
+      - name: Execute Test Run
+        id: execute_test_run
+        run: |
+          EXECUTE=$(curl -s -k --request POST "$IPADDR/api/rest/1/execute/testrun" \
+            --header 'Content-Type: application/json' \
+            --header 'X-INS-ID: $INSID' \
+            --header 'X-API-TOKEN: $APITOKEN' \
+            --data-raw '{
+              "agentName": "$AGENTNAME",
+              "includeCloudDevice": "$INCLUDECLOUDDEVICE",
+              "includeCloudBrowser": "$INCLUDECLOUDBROWSER",
+              "device": "$DEVICENAME",
+              "projectKey": "$PROJECTKEY",
+              "browser": "$BROWSER",
+              "region": "$REGION",
+              "testRunId": "$TESTRUNID",
+              "cloudAgent": "$ISCLOUDAGENT",
+              "browserVersion": "$BROWSERVERSION",
+              "os": "$OS",
+              "reRunFailedCases": "$RUNONLYFAILED"
+            }')
+          TEST_RUN_ID=$(echo "$EXECUTE" | jq -r '.testRunId')
+          echo "$TEST_RUN_ID" > value.txt
+          echo "::set-output name=test_run_id::$TEST_RUN_ID"
+
+      - name: Print test run ID
+        run: |
+          TEST_RUN_ID=$(cat value.txt)
+          echo "$TEST_RUN_ID"
+
+      - name: Wait for cloud agent
+        if: ${{ env.ISCLOUDAGENT == 'TRUE' }}
+        run: sleep 90
+
+      - name: Monitor Test Run
+        run: |
+          end_time="${{ steps.define_end_time.outputs.end_time }}"
+          while :; do
+            response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/${{ steps.execute_test_run.outputs.test_run_id }}/runstatus"  \
+              --header 'Content-Type: application/json' \
+              --header 'X-INS-ID: $INSID' \
+              --header 'X-API-TOKEN: $APITOKEN")
+            status=$(echo "$response" | jq -r '.status')
+            result=$(echo "$response" | jq -r '.result')
+            region=$(echo "$response" | jq -r '.region')
+            agentstatus=$(echo "$response" | jq -r '.cloudAgentStatus')
+            echo "inloop status $response \n $status"
+            if [[ "$result" == "FAIL" || "$status" == "null" ]]; then
+              echo "Result status is $result"
+              exit 1
+            fi
+            if [[ "$status" == "COMPLETED" || "$agentstatus" == "TERMINATED" || "$agentstatus" == "ERROR" || $(date +%s) -ge "$end_time" ]]; then
+              break
+            fi
+            sleep 20
+          done
+
+  # Handle post-aborted stage
+  post-aborted:
+    runs-on: [self-hosted, 'tot-master']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Read test run ID from file
+        id: read_test_run_id
+        run: |
+          if [ -f value.txt ]; then
+            TEST_RUN_ID=$(cat value.txt)
+            echo "::set-output name=test_run_id::$TEST_RUN_ID"
+          fi
+
+      - name: Abort test run
+        if: ${{ always() && steps.read_test_run_id.outputs.test_run_id != '' }}
+        run: |
+          curl -s -k --request PUT "$IPADDR/api/rest/1/abortrun/${{ steps.read_test_run_id.outputs.test_run_id }}" \
+            --header 'Content-Type: application/json' \
+            --header 'X-INS-ID: $INSID' \
+            --header 'X-API-TOKEN: $APITOKEN"
+          rm -rf value.txt
