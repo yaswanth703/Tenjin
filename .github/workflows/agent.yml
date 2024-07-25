@@ -82,6 +82,9 @@ jobs:
           # Fetch the Test Run ID from the previous step's output
           value=${{ steps.execute_test_run.outputs.test_run_id }}
 
+          # Debugging: Check if value is correctly set
+          echo "Fetched Test Run ID: $value"
+
           # Ensure TESTRUNID is not empty
           if [ -z "$value" ] || [ "$value" == "null" ]; then
             echo "Test run ID is not set correctly."
