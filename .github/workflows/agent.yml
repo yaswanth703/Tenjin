@@ -22,8 +22,8 @@ jobs:
       REGION: 'UTC+05:30'
       TESTRUNID: 'Test-Run-12490532'
       ISCLOUDAGENT: 'false'
-      # BROWSERVERSION: ''
-      # OS: ${{ secrets.OS }}
+      BROWSERVERSION: '80.0'
+      OS: 'Windows 8.1'
       # RUNONLYFAILED: ${{ secrets.RUNONLYFAILED }}
 
     steps:
