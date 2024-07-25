@@ -55,41 +55,38 @@ jobs:
               "os": "$OS",
               "reRunFailedCases": "$RUNONLYFAILED"
             }')
-          TEST_RUN_ID=$(echo "$EXECUTE" | jq -r '.testRunId')
-          echo "$TEST_RUN_ID" > value.txt
-          echo "::set-output name=test_run_id::$TEST_RUN_ID"
-
-      - name: Print test run ID
-        run: |
-          TEST_RUN_ID=$(cat value.txt)
-          echo "$TEST_RUN_ID"
-
-      - name: Wait for cloud agent
-        if: ${{ env.ISCLOUDAGENT == 'TRUE' }}
-        run: sleep 90
+          echo "EXECUTE: $EXECUTE"       
+          value=$(echo $EXECUTE | jq -r '.testRunId')
+          echo "Test Run ID: $value" 
 
       - name: Monitor Test Run
         run: |
-          end_time="${{ steps.define_end_time.outputs.end_time }}"
-          while :; do
-            response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/${{ steps.execute_test_run.outputs.test_run_id }}/runstatus"  \
-              --header 'Content-Type: application/json' \
-              --header 'X-INS-ID: $INSID' \
-              --header 'X-API-TOKEN: $APITOKEN")
-            status=$("echo '$response' | jq -r '.status'")
-            result=$("echo '$response' | jq -r '.result'")
-            region=$("echo '$response' | jq -r '.region'")
-            agentstatus=$("echo '$response' | jq -r '.cloudAgentStatus'")
-            echo "inloop status $response \n $status"
-            if [[ "$result" == "FAIL" || "$status" == "null" ]]; then
-              echo "Result status is $result"
-              exit 1
-            fi
-            if [[ "$status" == "COMPLETED" || "$agentstatus" == "TERMINATED" || "$agentstatus" == "ERROR" || $(date +%s) -ge "$end_time" ]]; then
-              break
-            fi
-            sleep 20
+          status=''
+          agentstatus=''
+          response=''
+          result=''
+          count=0
+          end_time=$(($(date +%s) + 3600)) # One hour timeout
+          while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
+              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
+                --header 'Content-Type: application/json' \
+                --header "X-INS-ID: $INSID" \
+                --header "X-API-TOKEN: $APITOKEN")
+              status=$(echo $response | jq -r '.status')
+              result=$(echo $response | jq -r '.result')
+              agentstatus=$(echo $response | jq -r '.cloudAgentStatus')
+              echo "inloop status $response \n $status"
+              sleep 20
+              count=$((count+1))
+              if [[ $result == 'FAIL' || $status == 'null' ]]; then
+                  echo "Result status is $result"
+                  exit 1
+              else
+                  echo "Result status is $result"
+              fi
           done
+
+has context menu
 
   # # Handle post-aborted stage
   # post-aborted:
