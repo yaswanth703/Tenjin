@@ -99,6 +99,7 @@ jobs:
               echo "Parsed status: $status"
               echo "Parsed result: $result"
               echo "Parsed agent status: $agentstatus"
+              echo "API response: $response"
               sleep 20
               count=$((count+1))
               if [[ $result == 'FAIL' || $status == 'null' ]]; then
