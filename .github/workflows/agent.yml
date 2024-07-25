@@ -1,27 +1,27 @@
 name: Execute Test Run
- 
+
 on:
   push:
     branches:
       - main
- 
+
 jobs:
   execute-test-run:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [20.x]
- 
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
- 
+
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
- 
+
       - name: Install curl
         run: sudo apt-get install -y curl
- 
+
       - name: Execute test run
         env:
           IPADDR: 'https://yethi-test.tenjinonline.com'
@@ -58,10 +58,10 @@ jobs:
                    "os": "'"$OS"'",
                    "reRunFailedCases": "'"$RUNONLYFAILED"'"
                    }')
-          echo "EXECUTE: $EXECUTE"       
+          echo "EXECUTE: $EXECUTE"
           value=$(echo $EXECUTE | jq -r '.testRunId')
-          echo "Test Run ID: $value"      
- 
+          echo "Test Run ID: $value"
+
       - name: Monitor test run status
         run: |
           status=''
@@ -71,7 +71,7 @@ jobs:
           count=0
           end_time=$(($(date +%s) + 3600)) # One hour timeout
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
-              response=$(curl -s -k --request GET \"$IPADDR/api/rest/1/testruns/$value/runstatus" \
+              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
                 --header "X-API-TOKEN: $APITOKEN")
