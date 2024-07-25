@@ -62,6 +62,10 @@ jobs:
           echo "EXECUTE response: $EXECUTE"
           value=$(echo $EXECUTE | jq -r '.testRunId')
           echo "Test Run ID: $value"
+          if [ -z "$value" ] || [ "$value" == "null" ]; then
+            echo "Failed to retrieve test run ID"
+            exit 1
+          fi
 
       - name: Monitor test run status
         run: |
