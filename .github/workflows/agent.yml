@@ -91,27 +91,27 @@ jobs:
             sleep 20
           done
 
-  # Handle post-aborted stage
-  post-aborted:
-    runs-on: ['ubuntu-latest']
+  # # Handle post-aborted stage
+  # post-aborted:
+  #   runs-on: ['ubuntu-latest']
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
 
-      - name: Read test run ID from file
-        id: read_test_run_id
-        run: |
-          if [ -f value.txt ]; then
-            TEST_RUN_ID=$(cat value.txt)
-            echo "::set-output name=test_run_id::$TEST_RUN_ID"
-          fi
+  #     - name: Read test run ID from file
+  #       id: read_test_run_id
+  #       run: |
+  #         if [ -f value.txt ]; then
+  #           TEST_RUN_ID=$(cat value.txt)
+  #           echo "::set-output name=test_run_id::$TEST_RUN_ID"
+  #         fi
 
-      - name: Abort test run
-        if: ${{ always() && steps.read_test_run_id.outputs.test_run_id != '' }}
-        run: |
-          curl -s -k --request PUT "$IPADDR/api/rest/1/abortrun/${{ steps.read_test_run_id.outputs.test_run_id }}" \
-            --header 'Content-Type: application/json' \
-            --header 'X-INS-ID: $INSID' \
-            --header 'X-API-TOKEN: $APITOKEN"
-          rm -rf value.txt
+  #     - name: Abort test run
+  #       if: ${{ always() && steps.read_test_run_id.outputs.test_run_id != '' }}
+  #       run: |
+  #         curl -s -k --request PUT "$IPADDR/api/rest/1/abortrun/${{ steps.read_test_run_id.outputs.test_run_id }}" \
+  #           --header 'Content-Type: application/json' \
+  #           --header 'X-INS-ID: $INSID' \
+  #           --header 'X-API-TOKEN: $APITOKEN"
+  #         rm -rf value.txt
