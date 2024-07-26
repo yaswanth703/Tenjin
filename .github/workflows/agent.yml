@@ -23,6 +23,7 @@ jobs:
         run: sudo apt-get install -y curl
 
       - name: Execute test run
+        id: execute
         env:
           IPADDR: 'https://yethi-test.tenjinonline.com'
           INSID: 'yethi-test'
@@ -66,8 +67,14 @@ jobs:
             echo "Failed to retrieve test run ID"
             exit 1
           fi
+          echo "::set-output name=test_run_id::$value"
 
       - name: Monitor test run status
+        env:
+          IPADDR: 'https://yethi-test.tenjinonline.com'
+          INSID: 'yethi-test'
+          APITOKEN: 'BLtzOI16bfz42xtL1A8nUmM9eFGO/rwEIRSYK8vcgGl9ShmZN/0WM4Ja/nCKxWeZXVAmOk5WgVPZYr57uoDANzoM5lF/M/m1+t4/niCjadwAoS9/r/6WYMCLPPnzpjUeA4dBDd9NjeWg0hQEJJnS15Xt++fXXsSf/XJ0UNVEVj3NpHBOGSXwRrb3sniTHNs2AHQ3ssor9sw/wHYFqhMjN8FtIP1JdyWBABzXwmkKcF9jsEZPZyH23UGS60mEqWUd5V5LbnXi0VH2MyOG76ul51rIyQ/aRv1Sv/gDDfeFRaBNWYv991GU0NdeTjuSQGouNV6VGC4viKwPQ+dHdxhNjQ=='
+          TEST_RUN_ID: ${{ steps.execute.outputs.test_run_id }}
         run: |
           echo "Starting Monitor test run status step"
           status=''
@@ -78,8 +85,8 @@ jobs:
           end_time=$(($(date +%s) + 3600)) # One hour timeout
           while [[ $status != 'COMPLETED' && $agentstatus != 'TERMINATED' && $agentstatus != 'ERROR' && $(date +%s) -lt $end_time ]]; do
               echo "Loop count: $count"
-              echo "Fetching status for test run ID: $value"
-              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$value/runstatus" \
+              echo "Fetching status for test run ID: $TEST_RUN_ID"
+              response=$(curl -s -k --request GET "$IPADDR/api/rest/1/testruns/$TEST_RUN_ID/runstatus" \
                 --header 'Content-Type: application/json' \
                 --header "X-INS-ID: $INSID" \
                 --header "X-API-TOKEN: $APITOKEN")
