@@ -13,17 +13,17 @@ jobs:
         node-version: [20.x]
 
     env:
-      IPADDR: 'https://yethi-test.tenjinonline.com'
-      INSID: 'yethi-test'
-      APITOKEN: 'LtUmX2lU5j83StKUObafMDnFdfTLJkZW15IKbwI6zQfs8RrKY+6jMy0kilHq5TmWkp9Tk2VxjMzC2q3bGK4qhiszIB0qsCfcPTfE1/18Mx8i8LgkfLt7/c4hGaT3gv6L2BTr0XoIEdQACsAEc3pGiCS9CR38F6c98mmiAUBkBxF9fk1GAgxJPAGOXDvKy3YgPdQ75S51mWPYDhXjFB60kmw2eIfJS3kGUJmuc8fKScqNGuMkm+VzYYKNXTkMLwn2KQm0sstqesIWjHsCXlNwD3KhVnbeZWs52LUjeKQcLKyTWur8WVr/5mLXQ26pkDH+G529UothDHA37x0BqPe6LQ=='
-      AGENTNAME: 'Akshay'
+      IPADDR: 'https://yaswanth1.tenjinonline.com/'
+      INSID: 'yaswanth1'
+      APITOKEN: 'F2n38AsF+XsD0yEfz7Qb5rqFpZyhIBZBEPQnFMo3kku5LsfSZ1KOYt0R/BJThHEDoc/tJ6dvM9RTtYea2vIxoLCGh0yQ6Rc5HPzxeFXsV4ninkyu84u+KhmfL/UPuY3gc/yQWua+l/dEnHJyBRSamrfpD4gskEfLpD3fLYfMk+1sAH5IDGB/0+5I3PzveNzM6T95tfV8NB0Y+p3XCbIFvnyGAlTHuEfFUXtyRhsATwJ0HXKNM0c/Yoxxit+obZaH6euGeRhm0UmDimdvDUHD0UhH1CHZYXoVWWjARqXfBqR86kngSUAV7j4S8sE9fwn+UX1Ru389X20qzSL2EnxzOw=='
+      AGENTNAME: 'yaswanth'
       INCLUDECLOUDDEVICE: 'FALSE'
       INCLUDECLOUDBROWSER: 'FALSE'
       DEVICENAME: ''
-      PROJECTKEY: 'YMT'
+      PROJECTKEY: 'DA'
       BROWSER: 'chrome'
       REGION: 'UTC+05:30'
-      TESTRUNID: 'Test-Run-13056975'
+      TESTRUNID: 'Test-Run-13073060'
       ISCLOUDAGENT: 'FALSE'
       BROWSERVERSION: ''
       OS: 'Windows 8.1'
